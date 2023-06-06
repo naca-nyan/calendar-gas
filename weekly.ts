@@ -20,25 +20,25 @@ function notifyWeekly() {
     message +=
       Utilities.formatDate(dt, "JST", "★ MM/dd(" + weekday[dt.getDay()] + ")") +
       "\n"; //日付行
-    var dayText = ""; //予定時刻クリア
-    var calendar = CalendarApp.getCalendarById(CALENDAR_ID); //カレンダーセット
-    var events = calendar.getEventsForDay(dt); //取得日の予定
+    let dayText = ""; //予定時刻クリア
+    const calendar = CalendarApp.getCalendarById(CALENDAR_ID); //カレンダーセット
+    const events = calendar.getEventsForDay(dt); //取得日の予定
 
-    var calendarName = calendar.getId(); //カレンダー読み取り
+    const calendarName = calendar.getId(); //カレンダー読み取り
     if (calendarName == undefined) {
       //カレンダー全体の予定有無判定
       message += "予定はありません\n\n";
       continue; //LP飛ばす
     }
 
-    //var events = calendar.getEventsForDay(dt);//取得日の予定//←重複排除
+    //const events = calendar.getEventsForDay(dt);//取得日の予定//←重複排除
     if (events.length == 0) {
       //取得日の予定有無判定
       message += "予定はありません\n\n";
       continue; //LP飛ばす
     }
 
-    for (var j = 0; j < events.length; j++) {
+    for (let j = 0; j < events.length; j++) {
       //取得日の予定全LP
       dayText += String(
         Utilities.formatDate(events[j].getStartTime(), "JST", "HH:mm")

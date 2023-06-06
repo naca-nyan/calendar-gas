@@ -115,7 +115,7 @@ const t = new Date(), //実行時刻
     //N分前個別通知//←trg4h解析して追加実行
     const arr = prop.getProperty("id4s").split(","),
       e = eid(arr[0]); //キューに入れたイベントの先頭一つを取得
-    TX = "";
+    let TX = "";
     TX += "【リマインド通知】イベント4時間前通知\n";
     TX += "--------------------\n";
     TX += "タイトル：" + e.title + "\n";
@@ -138,7 +138,7 @@ const t = new Date(), //実行時刻
     //N分前個別通知//←trg4h解析して追加実行
     const arr = prop.getProperty("ids").split(","),
       e = eid(arr[0]); //キューに入れたイベントの先頭一つを取得
-    TX = "";
+    let TX = "";
     TX += "【リマインド通知】イベント30分前通知\n";
     TX += "--------------------\n";
     TX += "タイトル：" + e.title + "\n";
@@ -218,7 +218,7 @@ const t = new Date(), //実行時刻
     prop.setProperty(`nst_${e.calendarId}`, w.nextSyncToken);
 
     for (let i = 0; i < w.items.length; i++) {
-      TX = "";
+      let TX = "";
       const ex = w.items[i];
       const ext = eid(ex.id);
       if (ex.status == "cancelled") {
