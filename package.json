@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "clasp": "clasp"
+    "clasp": "clasp",
+    "fmt": "prettier -w ."
   },
   "repository": {
     "type": "git",
@@ -18,7 +19,8 @@
   },
   "homepage": "https://github.com/naca-nyan/calendar-gas#readme",
   "devDependencies": {
-    "@google/clasp": "^2.4.2"
+    "@google/clasp": "^2.4.2",
+    "prettier": "^2.8.8"
   },
   "dependencies": {
     "@types/google-apps-script": "^1.0.64"
