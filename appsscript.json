@@ -1,6 +1,18 @@
 {
-  "timeZone": "America/New_York",
+  "timeZone": "Asia/Tokyo",
+  "oauthScopes": [
+    "https://www.google.com/calendar/feeds",
+    "https://www.googleapis.com/auth/script.scriptapp",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
   "dependencies": {
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Calendar",
+        "version": "v3",
+        "serviceId": "calendar"
+      }
+    ]
   },
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8"
