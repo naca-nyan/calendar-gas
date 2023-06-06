@@ -1,0 +1,26 @@
+{
+  "name": "calendar-gas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clasp": "clasp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naca-nyan/calendar-gas.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/naca-nyan/calendar-gas/issues"
+  },
+  "homepage": "https://github.com/naca-nyan/calendar-gas#readme",
+  "devDependencies": {
+    "@google/clasp": "^2.4.2"
+  },
+  "dependencies": {
+    "@types/google-apps-script": "^1.0.64"
+  }
+}
