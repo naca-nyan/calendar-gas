@@ -3,8 +3,9 @@
 // - https://developers.google.com/apps-script/reference/calendar/calendar
 //
 
-const CALENDAR_ID = "カレンダーID"; // カレンダーID
-const WEBHOOK_URL = "ウェブフックのURL"; // ウェブフックのURL
+const scriptProp = PropertiesService.getScriptProperties();
+const CALENDAR_ID = scriptProp.getProperty("CALENDAR_ID") ?? "";
+const WEBHOOK_URL = scriptProp.getProperty("WEBHOOK_URL") ?? "";
 
 // 週間予定通知
 // トリガーによって毎週日曜日に呼び出される
