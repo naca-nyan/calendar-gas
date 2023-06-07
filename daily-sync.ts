@@ -9,11 +9,6 @@ https://webird-programming.tech/archives/948
 アロー関数記述解説
 https://hajiritsu.com/gas-use-arrow-functions/
 
-※ベース1で記載され、現在使用してないコードあり。
-　完全解読できてるわけではないから不具合防止のためそのまま。
-　いつかは除去したい。
-
-
 動作
 main()が一括通知
 trg()が個別通知
@@ -23,234 +18,257 @@ daily()が走ると当日分のmain()とtrg()が所定の時間に走るよう�
 
 カレンダーを変更するとsync()が走り前回の情報取得からの差分をAPIに取りに行きそれを整形して送信する
 
-
-*/
-/*
-STX = "本通知は天ひまリマインダー GAS ver システム管理者より配信しております。\n（以下本文）\n\n"
-STX = STX + "平素は格別のご高配を賜り厚く御礼申し上げます。また、本サービスをご利用頂きまして誠にありがとうございます。\n\n"
-STX = STX + "本通知システムは大幅な改修に伴い、現在試験運用を実施しております。\n"
-STX = STX + "試験期間は1か月間を予定しており、その後本運用移行を実施予定でございます。\n"
-STX = STX + "期間中も本サービスをご利用頂けますが、本運用移行の際、以下の点が変更となります。\n"
-STX = STX + "・bot名が変更\n現：「天ひまリマインダー GAS ver」 →　新：「天ひまリマインダー」\n"
-STX = STX + "・時間表記の変更\n現：予定開始時刻からの差分生データ　→　新：4時間及び30分前通知の表記を固定文\n\n"
-STX = STX + "何卒ご理解賜りますようお願い申し上げるともに、試験運用中は通知ミス等が発生する恐れがありますため、利用者様間での連携を密にご対応頂きますよう重ねてお願い申し上げます。\n"
-STX = STX + "ご迷惑をおかけいたしますが、ご理解とご協力のほど何卒宜しくお願いいたします。\n\n（以上）\n"
 */
 
-const nct = new Date(); //実行時刻
-const t = new Date(); //実行時刻
-const nt = new Date(nct.setDate(nct.getDate() + 2)); //48時間後
-const prop = PropertiesService.getScriptProperties(); //ストレージアクセス
-const cals = CalendarApp.getAllOwnedCalendars(); //カレンダー
-const cfg = {
-  locale: "ja-JP", //時刻表示形式
-  main: "07:00", //一括通知の時刻
-  trg: 30, //N分前の個別通知
-  trg4h: 240, //N分前の個別通知
-  webhooks: [
-    //メッセージを送信するwebhook url 複数可
-    "ウェブフックのURL",
-  ],
-  opt: { maxResults: 65536, showDeleted: true }, //変更非推奨 カレンダー参照設定
-  col: [
-    //変更非推奨 イベント色パレット
-    null,
-    "#a4bdfc",
-    "#7AE7BF",
-    "#BDADFF",
-    "#FF887C",
-    "#FBD75B",
-    "#FFB878",
-    "#46D6DB",
-    "#E1E1E1",
-    "#5484ED",
-    "#51B749",
-    "#DC2127",
-  ],
-};
-const fmt = (
-  y,
-  x = CalendarApp.getCalendarById(y.getOriginalCalendarId()),
+const message = `\
+本通知は天ひまリマインダー GAS ver システム管理者より配信しております。
+（以下本文）
+
+平素は格別のご高配を賜り厚く御礼申し上げます。また、本サービスをご利用頂きまして誠にありがとうございます。
+
+本通知システムは大幅な改修に伴い、現在試験運用を実施しております。
+試験期間は1か月間を予定しており、その後本運用移行を実施予定でございます。
+期間中も本サービスをご利用頂けますが、本運用移行の際、以下の点が変更となります。
+・bot名が変更
+現：「天ひまリマインダー GAS ver」 →　新：「天ひまリマインダー」
+・時間表記の変更
+現：予定開始時刻からの差分生データ　→　新：4時間及び30分前通知の表記を固定文
+
+何卒ご理解賜りますようお願い申し上げるともに、試験運用中は通知ミス等が発生する恐れがありますため、
+利用者様間での連携を密にご対応頂きますよう重ねてお願い申し上げます。
+ご迷惑をおかけいたしますが、ご理解とご協力のほど何卒宜しくお願いいたします。
+
+（以上）
+`;
+
+const allOwnedCalendars = CalendarApp.getAllOwnedCalendars();
+
+const getEventInfo = (
+  event: GoogleAppsScript.Calendar.CalendarEvent,
+  cal = CalendarApp.getCalendarById(event.getOriginalCalendarId())
 ) => ({
-  //使いやすいようフォーマット
-  name: x.getName(),
-  title: y.getTitle(),
-  color: cfg.col[y.getColor()] || x.getColor(),
-  desc: y.getDescription(),
-  isAD: y.isAllDayEvent(),
-  time: y.isAllDayEvent()
-    ? [y.getAllDayStartDate(), new Date(y.getAllDayEndDate().getTime() - 1)]
-    : [y.getStartTime(), y.getEndTime()],
-  id: y.getId(),
+  name: cal.getName(),
+  title: event.getTitle(),
+  desc: event.getDescription(),
+  isAD: event.isAllDayEvent(),
+  time: event.isAllDayEvent()
+    ? [
+        event.getAllDayStartDate(),
+        new Date(event.getAllDayEndDate().getTime() - 1),
+      ]
+    : [event.getStartTime(), event.getEndTime()],
+  id: event.getId(),
 });
-//today=()=>cals.flatMap(x=>x.getEventsForDay(t).map(y=>fmt(y,x))),//カレンダーからイベント取得
-const today = () =>
-  cals.flatMap((x) => x.getEvents(t, nt).map((y) => fmt(y, x))); //カレンダーから48時間分イベント取得
-const eid = (id) =>
-  cals.flatMap((x, y) => ((y = x.getEventById(id)), y ? [fmt(y, x)] : []))[0]; //idからイベント取得
-const widget = (x) => ({
-  //discord embed形式
-  color: parseInt(x.color.slice(1), 16), //10進変換
-  title: x.title,
-  description: (x.desc ? x.desc + "\n" : "") +
-    [
-      ...new Set(
-        x.isAD //Setで重複解除
-          ? x.time.map((x) => x.toLocaleDateString(cfg.locale))
-          : x.time.map((x) => x.toLocaleString(cfg.locale)),
-      ),
-    ].join(" ~ "),
-  footer: { text: x.name },
-});
-const send = (
-  x = { username: "天ひまリマインダー", content: "こゃ" }, //webhook送信
-) =>
-  cfg.webhooks.forEach((y) =>
-    UrlFetchApp.fetch(y, {
-      contentType: "application/json",
-      method: "post",
-      payload: JSON.stringify(x),
-      muteHttpExceptions: false,
-    })
-  );
 
-//main=()=>TX = '',
-function trg4h() {
-  //N分前個別通知//←trg4h解析して追加実行
-  const arr = prop.getProperty("id4s").split(","),
-    e = eid(arr[0]); //キューに入れたイベントの先頭一つを取得
-  let TX = "";
-  TX += "【リマインド通知】イベント4時間前通知\n";
-  TX += "--------------------\n";
-  TX += "タイトル：" + e.title + "\n";
-  TX += "開始日時:" +
-    e.time[0].toLocaleString(cfg.locale) +
-    " ～ " +
-    e.time[1].toLocaleString(cfg.locale) +
-    "\n";
-  TX += "" + e.desc + "\n"; //参加予定者：
-  TX += "--------------------\n";
-  send({
-    //usernameとcontentは通知に表示される
-    username: `天ひまリマインダー`,
-    content: TX,
+// idからイベント取得
+const getEventInfoById = (id: string) => {
+  for (const cal of allOwnedCalendars) {
+    const e = cal.getEventById(id);
+    if (e) {
+      return getEventInfo(e, cal);
+    }
+  }
+  return null;
+};
+
+function send(content = "こゃ") {
+  const payload = {
+    username: "天ひまリマインダー",
+    content,
+  };
+  UrlFetchApp.fetch(WEBHOOK_URL, {
+    contentType: "application/json",
+    method: "post",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: false,
   });
-  prop.setProperty("id4s", arr.slice(1).join(",")); //キューの先頭を削除
+}
+
+function sendEventyNotifyById(id: string, timeDiff: string) {
+  const e = getEventInfoById(id);
+  if (e === null) {
+    console.error("cannot find id", id, "from id4s");
+    return;
+  }
+  const [start, end] = e.time.map((date) =>
+    // toLocaleString の型定義が間違っていそう
+    // 普通の Date 型にキャストすれば動く
+    // @ts-ignore
+    date.toLocaleString("ja-JP")
+  );
+  const content = `\
+【リマインド通知】イベント${timeDiff}前通知
+--------------------
+タイトル：${e.getTitle()}
+開始日時：${start} ～ ${end}
+${e.desc}
+--------------------`;
+  send(content);
+}
+
+function trg4h() {
+  const id4sRaw = scriptProp.getProperty("id4s") ?? "";
+  // キューに入れたイベントの先頭一つを取得
+  const id4s = id4sRaw.split(",");
+  // キューの先頭を削除
+  const id = id4s.shift();
+  if (id === undefined) {
+    console.error("cannot pop: id4s was empty");
+    return;
+  }
+  sendEventyNotifyById(id, "4時間");
+  scriptProp.setProperty("id4s", id4s.join(","));
 }
 
 function trg() {
-  //N分前個別通知//←trg4h解析して追加実行
-  const arr = prop.getProperty("ids").split(","),
-    e = eid(arr[0]); //キューに入れたイベントの先頭一つを取得
-  let TX = "";
-  TX += "【リマインド通知】イベント30分前通知\n";
-  TX += "--------------------\n";
-  TX += "タイトル：" + e.title + "\n";
-  TX += "開始日時:" +
-    e.time[0].toLocaleString(cfg.locale) +
-    " ～ " +
-    e.time[1].toLocaleString(cfg.locale) +
-    "\n";
-  TX += "" + e.desc + "\n"; //参加予定者：
-  TX += "--------------------\n";
-  send({
-    //usernameとcontentは通知に表示される
-    username: `天ひまリマインダー`,
-    content: TX,
-  });
-  prop.setProperty("ids", arr.slice(1).join(",")); //キューの先頭を削除
+  // N分前個別通知//←trg4h解析して追加実行
+  const idsRaw = scriptProp.getProperty("ids") ?? "";
+  // キューに入れたイベントの先頭一つを取得
+  const ids = idsRaw.split(",");
+  // キューの先頭を削除
+  const id = ids.shift();
+  if (id === undefined) {
+    console.error("cannot pop: ids was empty");
+    return;
+  }
+  sendEventyNotifyById(id, "30分");
+  scriptProp.setProperty("ids", ids.join(","));
 }
+
+// 毎日起動される
 function daily() {
-  //mainとtrgの更新 毎日起動
-  ScriptApp.getProjectTriggers().forEach(
-    (x) =>
-      "trg4h,trg".includes(x.getHandlerFunction()) &&
-      ScriptApp.deleteTrigger(x),
-  ); //過去のトリガーを削除
-  const set = (x, y) => ScriptApp.newTrigger(y).timeBased().at(x).create();
-
-  // {//main
-  //   const t1=new Date(t.toDateString()+' '+cfg.main);
-  //   t1.getTime()>t.getTime()&&set(t1,'main');
-  //  }
-  prop.setProperty(
-    //trg4h
-    "id4s",
-    today()
-      .flatMap((x) => {
-        const t1 = new Date(x.time[0] - cfg.trg4h * 6e4);
-        if (x.isAD || !(t1.getTime() > t.getTime())) return []; //終日イベントと過去イベントは除外　　予定-4h>タスク実行時間ではない
-        set(t1, "trg4h");
-        return [[t1.getTime(), x.id]];
-      })
-      .sort((a, b) => Math.sign(a[0] - b[0]))
-      .map((x) => x[1])
-      .join(","), //イベントの開始時刻順に並べてキューに入れる
-  ),
-    prop.setProperty(
-      //trg
-      "ids",
-      today()
-        .flatMap((x) => {
-          const t1 = new Date(x.time[0] - cfg.trg * 6e4);
-          if (x.isAD || !(t1.getTime() > t.getTime())) return []; //終日イベントと過去イベントは除外
-          set(t1, "trg");
-          return [[t1.getTime(), x.id]];
-        })
-        .sort((a, b) => Math.sign(a[0] - b[0]))
-        .map((x) => x[1])
-        .join(","), //イベントの開始時刻順に並べてキューに入れる
-    );
-}
-function sync_init() {
-  //APIキー再取得　必要時に手動で起動
-  cals.forEach((x) => {
-    const id = x.getId();
-    prop.setProperty(
-      `nst_${id}`,
-      Calendar.Events.list(id, cfg.opt).nextSyncToken,
-    );
-  });
+  updateTriggers();
 }
 
-function sync(e = { calendarID: "カレンダーID" }) {
-  //カレンダーdiff取得 カレンダー変更時呼び出し
-  const w = Calendar.Events.list(e.calendarId, {
-    ...cfg.opt,
-    syncToken: prop.getProperty(`nst_${e.calendarId}`),
-  });
-  prop.setProperty(`nst_${e.calendarId}`, w.nextSyncToken);
+// トリガーとキューの更新
+function updateTriggers() {
+  // 過去のトリガーを削除
+  ScriptApp.getProjectTriggers()
+    .filter((trigger) =>
+      ["trg4h", "trg"].includes(trigger.getHandlerFunction())
+    )
+    .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
 
-  for (let i = 0; i < w.items.length; i++) {
-    let TX = "";
-    const ex = w.items[i];
-    const ext = eid(ex.id);
-    if (ex.status == "cancelled") {
-      TX += "【予定削除】\n";
-    } else if (ex.status == "tentative") {
-      TX += "【暫定】\n";
-    } else if (Date.parse(ex.updated) - Date.parse(ex.created) < 5e3) {
-      TX += "【予定追加】\n";
-    } else {
-      TX += "【予定変更】\n";
+  // 3 日分のイベントを取得
+  const now = new Date();
+  const after48hours = new Date();
+  after48hours.setDate(now.getDate() + 2);
+  const events = allOwnedCalendars.flatMap((cal) =>
+    cal.getEvents(now, after48hours)
+  );
+  const targetEvents = events
+    // 終日イベント or 過去イベントは除外
+    .filter((e) => !(e.isAllDayEvent() || e.getStartTime() < now))
+    // 開始時間でソート
+    .sort(
+      (e1, e2) => e1.getStartTime().getTime() - e2.getStartTime().getTime()
+    );
+
+  const setNewTriggerAt = (date, funcName) =>
+    ScriptApp.newTrigger(funcName).timeBased().at(date).create();
+
+  // 4時間前通知トリガー設定
+  targetEvents.forEach((e) => {
+    const HOUR = 60 * 60 * 1000;
+    const timeDiffInMS = 4 * HOUR;
+    const startInMs = e.getStartTime().getTime();
+    const notifyAt = new Date(startInMs - timeDiffInMS);
+    setNewTriggerAt(notifyAt, "trg4h");
+  });
+  // 4時間前キュー設定
+  const id4sRaw = targetEvents.map((e) => e.getId()).join(",");
+  scriptProp.setProperty("id4s", id4sRaw);
+
+  // 30分前通知トリガー設定
+  targetEvents.forEach((e) => {
+    const MINUTES = 60 * 1000;
+    const timeDiffInMS = 30 * MINUTES;
+    const startInMs = e.getStartTime().getTime();
+    const notifyAt = new Date(startInMs - timeDiffInMS);
+    setNewTriggerAt(notifyAt, "trg");
+  });
+  // 30分前キュー設定
+  const idsRaw = targetEvents.map((e) => e.getId()).join(",");
+  scriptProp.setProperty("ids", idsRaw);
+}
+
+// 各カレンダーの `nextSyncToken` をセット
+// これを実行したあとの差分が通知される
+function setNextSyncTokens() {
+  allOwnedCalendars.forEach((cal) => {
+    const id = cal.getId();
+    const nextSyncToken = Calendar.Events?.list(id, {
+      maxResults: 65536,
+      showDeleted: true,
+    }).nextSyncToken;
+    if (nextSyncToken) {
+      scriptProp.setProperty(`nst_${id}`, nextSyncToken);
     }
+  });
+}
 
-    TX += "--------------------\n";
-    TX += "タイトル：" + ext.title + "\n";
-    TX += "開始日時：" +
-      ext.time[0].toLocaleString(cfg.locale) +
-      " ～ " +
-      ext.time[1].toLocaleString(cfg.locale) +
-      "\n";
-    TX += "" + ext.desc + "\n"; //参加予定者：
-    TX += "--------------------\n";
-
-    send({
-      //usernameとcontentは通知に表示される
-      username: `天ひまリマインダー`,
-      content: TX,
-    });
+// カレンダーの変更通知
+// カレンダー変更時にその都度呼び出される
+function sync(e?: GoogleAppsScript.Events.CalendarEventUpdated) {
+  // テストで呼び出す用に undefined の時はデフォルト ID をセット
+  const calendarId = e ? e.calendarId : CALENDAR_ID;
+  const syncToken = scriptProp.getProperty(`nst_${calendarId}`);
+  const events = Calendar.Events?.list(calendarId, {
+    syncToken: syncToken,
+    maxResults: 65536,
+    showDeleted: true,
+  });
+  if (events === undefined) {
+    console.error("cannot get events of calendarId:", calendarId);
+    return;
+  }
+  const nextSyncToken = events.nextSyncToken;
+  if (nextSyncToken) {
+    scriptProp.setProperty(`nst_${calendarId}`, nextSyncToken);
   }
 
-  daily(); //trgの更新
+  const items = events.items ?? [];
+  for (const item of items) {
+    const isFirstCreated = (item: GoogleAppsScript.Calendar.Schema.Event) => {
+      const updated = item.updated ?? "";
+      const created = item.created ?? "";
+      const SECONDS = 1000;
+      return Date.parse(updated) - Date.parse(created) < 5 * SECONDS;
+    };
+
+    let status = "不明";
+    if (item.status == "cancelled") {
+      status = "予定削除";
+    } else if (item.status == "tentative") {
+      status = "暫定";
+    } else if (isFirstCreated(item)) {
+      status = "予定追加";
+    } else {
+      status = "予定変更";
+    }
+    const eventInfo = getEventInfoById(item.id ?? "");
+    if (eventInfo === null) {
+      console.warn("cannot get event by id:", item.id);
+      continue;
+    }
+
+    const [start, end] = eventInfo.time.map((date) =>
+      // toLocaleString の型定義が間違っていそう
+      // 普通の Date 型にキャストすれば動く
+      // @ts-ignore
+      date.toLocaleString("ja-JP")
+    );
+    const content = `\
+【${status}】
+--------------------
+タイトル：${eventInfo.title}
+開始日時：${start} ～ ${end}
+${eventInfo.desc}
+--------------------
+`;
+    send(content);
+  }
+
+  // トリガーを更新
+  updateTriggers();
 }
