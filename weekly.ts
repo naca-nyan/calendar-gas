@@ -1,12 +1,3 @@
-// ver1.0
-// リファレンス
-// - https://developers.google.com/apps-script/reference/calendar/calendar
-//
-
-const scriptProp = PropertiesService.getScriptProperties();
-const CALENDAR_ID = scriptProp.getProperty("CALENDAR_ID") ?? "";
-const WEBHOOK_URL = scriptProp.getProperty("WEBHOOK_URL") ?? "";
-
 // 週間予定通知
 // トリガーによって毎週日曜日に呼び出される
 function notifyWeekly() {
@@ -17,50 +8,38 @@ function notifyWeekly() {
     return;
   }
 
-  const format = (date, format_string) =>
-    Utilities.formatDate(date, "JST", format_string);
-  const dayOfWeek = (date) => {
-    const daysOfWeek = ["日", "月", "火", "水", "木", "金", "土"];
-    return daysOfWeek[date.getDay()];
-  };
+  const dates = Array.from(Array(7).keys(), (i) => {
+    const date = new Date();
+    date.setDate(date.getDate() + i + 1); // 次の日からなので + 1
+    return date;
+  });
 
-  let message = `\
+  const datesWithEvents = dates.map((date) => {
+    const dow = dayOfWeek(date);
+    const dateFormat = format("MM/dd", date) + ` (${dow})`;
+    const events = calendar.getEventsForDay(date);
+    const eventsFormat = events.map((e) => {
+      const title = e.getTitle();
+      const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
+        format("HH:mm", date)
+      );
+      return `${start}-${end} ${title}`;
+    });
+    return { date: dateFormat, events: eventsFormat };
+  });
+
+  // prettier-ignore
+  const message = `\
 来週の天ひま！の予定一覧はこちら↓
 ※毎週日曜日に、週間予定をお知らせしています！
 
-`;
+` + 
+datesWithEvents.map(({ date, events }) =>
+  `★ ${date}\n` +
+  (events.length ?
+    events.join(`\n`)
+  : `予定はありません`)
+).join("\n\n");
 
-  for (let i = 0; i < 7; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() + i + 1); // 次の日からなので + 1
-
-    message += `\
-★ ${format(date, "MM/dd")}(${dayOfWeek(date)})
-`;
-
-    const events = calendar.getEventsForDay(date);
-    let dayText = "";
-    if (events.length == 0) {
-      dayText = "予定はありません";
-    } else {
-      for (const e of events) {
-        const start = format(e.getStartTime(), "HH:mm");
-        const end = format(e.getEndTime(), "HH:mm");
-        const title = e.getTitle();
-        dayText += `${start}-${end} ${title}`;
-      }
-    }
-    message += dayText + "\n\n";
-  }
-
-  const payload = {
-    username: "天ひまリマインダー",
-    content: message,
-  };
-
-  UrlFetchApp.fetch(WEBHOOK_URL, {
-    method: "post",
-    contentType: "application/json",
-    payload: JSON.stringify(payload),
-  });
+  send(message);
 }
