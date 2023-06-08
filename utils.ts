@@ -1,3 +1,5 @@
+// https://github.com/naca-nyan/calendar-gas
+
 const scriptProp = PropertiesService.getScriptProperties();
 const CALENDAR_ID = scriptProp.getProperty("CALENDAR_ID") ?? "";
 const WEBHOOK_URL = scriptProp.getProperty("WEBHOOK_URL") ?? "";

@@ -1,3 +1,5 @@
+// https://github.com/naca-nyan/calendar-gas
+
 // 週間予定通知
 // トリガーによって毎週日曜日に呼び出される
 function notifyWeekly() {

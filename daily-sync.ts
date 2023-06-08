@@ -1,3 +1,5 @@
+// https://github.com/naca-nyan/calendar-gas
+
 function sendEventyNotifyById(id: string, message: string) {
   const e = CALENDAR.getEventById(id);
   if (e === null) {
