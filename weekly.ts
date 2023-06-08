@@ -43,5 +43,5 @@ datesWithEvents.map(({ date, events }) =>
   : `予定はありません`)
 ).join("\n\n");
 
-  send(message);
+  send({ content: message });
 }
