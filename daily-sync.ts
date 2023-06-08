@@ -114,17 +114,18 @@ function setNextSyncTokens() {
 
 // カレンダーの変更通知
 // カレンダー変更時にその都度呼び出される
-function sync(e?: GoogleAppsScript.Events.CalendarEventUpdated) {
-  // テストで呼び出す用に undefined の時はデフォルト ID をセット
-  const calendarId = e ? e.calendarId : CALENDAR_ID;
+function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
+  if (e.calendarId != CALENDAR_ID) {
+    return;
+  }
   const syncToken = scriptProp.getProperty("SYNC_TOKEN");
-  const events = Calendar.Events?.list(calendarId, {
+  const events = Calendar.Events?.list(CALENDAR_ID, {
     syncToken: syncToken,
     maxResults: 65536,
     showDeleted: true,
   });
   if (events === undefined) {
-    console.error("cannot get events of calendarId:", calendarId);
+    console.error("cannot get events of calendarId:", CALENDAR_ID);
     return;
   }
   const nextSyncToken = events.nextSyncToken;
