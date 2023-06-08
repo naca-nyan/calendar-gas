@@ -3,17 +3,14 @@ const CALENDAR_ID = scriptProp.getProperty("CALENDAR_ID") ?? "";
 const WEBHOOK_URL = scriptProp.getProperty("WEBHOOK_URL") ?? "";
 const CALENDAR = CalendarApp.getCalendarById(CALENDAR_ID);
 
-function send(content = "こゃ") {
-  const payload = {
-    username: "天ひまリマインダー",
-    content,
-  };
-  UrlFetchApp.fetch(WEBHOOK_URL, {
+function send(payload) {
+  const response = UrlFetchApp.fetch(WEBHOOK_URL, {
     contentType: "application/json",
     method: "post",
     payload: JSON.stringify(payload),
     muteHttpExceptions: false,
   });
+  Logger.log(response.getResponseCode());
 }
 
 function format(format_string, date) {

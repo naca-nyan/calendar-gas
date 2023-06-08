@@ -1,20 +1,19 @@
-function sendEventyNotifyById(id: string, timeDiff: string) {
+function sendEventyNotifyById(id: string, message: string) {
   const e = CALENDAR.getEventById(id);
   if (e === null) {
-    console.error("cannot find id", id, "from id4s");
+    console.error("cannot find id", id);
     return;
   }
   const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
     format("yyyy/MM/dd HH:mm", date)
   );
-  const content = `\
-【リマインド通知】イベント${timeDiff}前通知
---------------------
-タイトル：${e.getTitle()}
-開始日時：${start} ～ ${end}
-${e.getDescription()}
---------------------`;
-  send(content);
+  const descriptions = [`開始日時：${start} ～ ${end}`, e.getDescription()];
+  const embed = {
+    title: e.getTitle(),
+    description: descriptions.join("\n"),
+    fields: [{ name: message, value: "" }],
+  };
+  send({ embeds: [embed] });
 }
 
 function notify240min() {
@@ -27,7 +26,7 @@ function notify240min() {
     console.error("cannot pop: ID_QUEUE_240MIN was empty");
     return;
   }
-  sendEventyNotifyById(id, "4時間");
+  sendEventyNotifyById(id, ":tea: イベント4時間前通知");
   scriptProp.setProperty("ID_QUEUE_240MIN", ids.join(","));
 }
 
@@ -41,7 +40,7 @@ function notify30min() {
     console.error("cannot pop: ID_QUEUE_30MIN was empty");
     return;
   }
-  sendEventyNotifyById(id, "30分");
+  sendEventyNotifyById(id, ":alarm_clock: イベント30分前通知");
   scriptProp.setProperty("ID_QUEUE_30MIN", ids.join(","));
 }
 
@@ -143,34 +142,22 @@ function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
       return Date.parse(updated) - Date.parse(created) < 5 * SECONDS;
     };
 
-    let status = "不明";
+    let status = ":question: 不明";
     if (item.status == "cancelled") {
-      status = "予定削除";
+      status = ":wastebasket: 予定削除";
     } else if (item.status == "tentative") {
-      status = "暫定";
+      status = ":hourglass_flowing_sand: 暫定";
     } else if (isFirstCreated(item)) {
-      status = "予定追加";
+      status = ":sparkles: 予定追加";
     } else {
-      status = "予定変更";
+      status = ":arrow_right_hook: 予定変更";
     }
-    const e = CALENDAR.getEventById(item.id ?? "");
-    if (e === null) {
-      console.warn("cannot get event by id:", item.id);
+    const id = item.id;
+    if (!id) {
+      console.warn("invalid item.id");
       continue;
     }
-
-    const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
-      format("yyyy/MM/dd HH:mm", date)
-    );
-    const content = `\
-【${status}】
---------------------
-タイトル：${e.getTitle()}
-開始日時：${start} ～ ${end}
-${e.getDescription()}
---------------------
-`;
-    send(content);
+    sendEventyNotifyById(id, status);
   }
 
   // トリガーを更新
