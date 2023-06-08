@@ -17,18 +17,18 @@ ${e.getDescription()}
   send(content);
 }
 
-function notify4hour() {
-  const ID_QUEUE = scriptProp.getProperty("ID_QUEUE_4HOUR") ?? "";
+function notify240min() {
+  const ID_QUEUE = scriptProp.getProperty("ID_QUEUE_240MIN") ?? "";
   // キューに入れたイベントの先頭一つを取得
   const ids = ID_QUEUE.split(",");
   // キューの先頭を削除
   const id = ids.shift();
   if (id === undefined) {
-    console.error("cannot pop: ID_QUEUE_4HOUR was empty");
+    console.error("cannot pop: ID_QUEUE_240MIN was empty");
     return;
   }
   sendEventyNotifyById(id, "4時間");
-  scriptProp.setProperty("ID_QUEUE_4HOUR", ids.join(","));
+  scriptProp.setProperty("ID_QUEUE_240MIN", ids.join(","));
 }
 
 function notify30min() {
@@ -55,7 +55,7 @@ function updateTriggers() {
   // 過去のトリガーを削除
   ScriptApp.getProjectTriggers()
     .filter((trigger) =>
-      ["notify4hour", "notify30min"].includes(trigger.getHandlerFunction())
+      ["notify240min", "notify30min"].includes(trigger.getHandlerFunction())
     )
     .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
 
@@ -64,40 +64,41 @@ function updateTriggers() {
   const after48hours = new Date();
   after48hours.setDate(now.getDate() + 2);
   const events = CALENDAR.getEvents(now, after48hours);
+
+  setEventsTrigger(240, "notify240min", "ID_QUEUE_240MIN", events);
+  setEventsTrigger(30, "notify30min", "ID_QUEUE_30MIN", events);
+}
+
+function setEventsTrigger(
+  beforeMin: number,
+  triggerFuncName: string,
+  queueName: string,
+  events: GoogleAppsScript.Calendar.CalendarEvent[]
+) {
+  const now = new Date();
+  const MINUTES = 60 * 1000;
+  const timeDiffInMS = beforeMin * MINUTES;
+
   const targetEvents = events
-    // 終日イベント or 過去イベントは除外
-    .filter((e) => !(e.isAllDayEvent() || e.getStartTime() < now))
+    // 終日イベントは除外
+    .filter((e) => !e.isAllDayEvent())
     // 開始時間でソート
-    .sort(
-      (e1, e2) => e1.getStartTime().getTime() - e2.getStartTime().getTime()
-    );
+    .sort((e1, e2) => e1.getStartTime().getTime() - e2.getStartTime().getTime())
+    .map((e) => {
+      const startInMs = e.getStartTime().getTime();
+      const notifyAt = new Date(startInMs - timeDiffInMS);
+      return { notifyAt, event: e };
+    })
+    // 通知時刻が現在より後のもののみ
+    .filter(({ notifyAt }) => now < notifyAt);
 
-  const setNewTriggerAt = (date, funcName) =>
-    ScriptApp.newTrigger(funcName).timeBased().at(date).create();
-
-  // 4時間前通知トリガー設定
-  targetEvents.forEach((e) => {
-    const HOUR = 60 * 60 * 1000;
-    const timeDiffInMS = 4 * HOUR;
-    const startInMs = e.getStartTime().getTime();
-    const notifyAt = new Date(startInMs - timeDiffInMS);
-    setNewTriggerAt(notifyAt, "notify4hour");
+  // 通知トリガー設定
+  targetEvents.forEach(({ notifyAt, event }) => {
+    ScriptApp.newTrigger(triggerFuncName).timeBased().at(notifyAt).create();
   });
-  // 4時間前キュー設定
-  const ID_QUEUE_4HOUR = targetEvents.map((e) => e.getId()).join(",");
-  scriptProp.setProperty("ID_QUEUE_4HOUR", ID_QUEUE_4HOUR);
-
-  // 30分前通知トリガー設定
-  targetEvents.forEach((e) => {
-    const MINUTES = 60 * 1000;
-    const timeDiffInMS = 30 * MINUTES;
-    const startInMs = e.getStartTime().getTime();
-    const notifyAt = new Date(startInMs - timeDiffInMS);
-    setNewTriggerAt(notifyAt, "noitfy30min");
-  });
-  // 30分前キュー設定
-  const ID_QUEUE_30MIN = targetEvents.map((e) => e.getId()).join(",");
-  scriptProp.setProperty("ID_QUEUE_30MIN", ID_QUEUE_30MIN);
+  // キュー設定
+  const ID_QUEUE = targetEvents.map(({ event }) => event.getId()).join(",");
+  scriptProp.setProperty(queueName, ID_QUEUE);
 }
 
 // 各カレンダーの `nextSyncToken` をセット
