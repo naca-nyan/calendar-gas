@@ -15,7 +15,11 @@ function sendEventyNotifyById(id: string, message: string) {
     description: descriptions.join("\n"),
     fields: [{ name: message, value: "" }],
   };
-  send({ embeds: [embed] });
+  const mentions = Array.from(
+    e.getDescription().matchAll(/<@.+?>/g),
+    (match) => match[0]
+  );
+  send({ content: mentions.join(" "), embeds: [embed] });
 }
 
 function notify240min() {
