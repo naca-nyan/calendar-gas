@@ -28,7 +28,7 @@ function notify240min() {
   const ids = ID_QUEUE.split(",");
   // キューの先頭を削除
   const id = ids.shift();
-  if (id === undefined) {
+  if (!id) {
     console.error("cannot pop: ID_QUEUE_240MIN was empty");
     return;
   }
@@ -42,7 +42,7 @@ function notify30min() {
   const ids = ID_QUEUE.split(",");
   // キューの先頭を削除
   const id = ids.shift();
-  if (id === undefined) {
+  if (!id) {
     console.error("cannot pop: ID_QUEUE_30MIN was empty");
     return;
   }
