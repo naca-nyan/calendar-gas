@@ -30,18 +30,18 @@ function notifyWeekly() {
     return { date: dateFormat, events: eventsFormat };
   });
 
-  // prettier-ignore
-  const message = `\
+  const message =
+    `\
 来週の天ひま！の予定一覧はこちら↓
 ※毎週日曜日に、週間予定をお知らせしています！
 
-` + 
-datesWithEvents.map(({ date, events }) =>
-  `★ ${date}\n` +
-  (events.length ?
-    events.join(`\n`)
-  : `予定はありません`)
-).join("\n\n");
+` +
+    datesWithEvents
+      .map(
+        ({ date, events }) =>
+          `★ **${date}**\n` + (events.join("\n") || "予定はありません")
+      )
+      .join("\n\n");
 
   send({ content: message });
 }
