@@ -121,9 +121,12 @@ function setNextSyncTokens() {
 // カレンダーの変更通知
 // カレンダー変更時にその都度呼び出される
 function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
+  // 対象のカレンダー変更でなければ無視する
   if (e.calendarId != CALENDAR_ID) {
     return;
   }
+
+  // syncToken を使って差分を取得
   const syncToken = scriptProp.getProperty("SYNC_TOKEN");
   const events = Calendar.Events?.list(CALENDAR_ID, {
     syncToken: syncToken,
@@ -140,30 +143,34 @@ function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
   }
 
   const items = events.items ?? [];
+  // 差分があったイベントをすべて通知
   for (const item of items) {
-    const isFirstCreated = (item: GoogleAppsScript.Calendar.Schema.Event) => {
-      const updated = item.updated ?? "";
-      const created = item.created ?? "";
-      const SECONDS = 1000;
-      return Date.parse(updated) - Date.parse(created) < 5 * SECONDS;
-    };
-
-    let status = ":question: 不明";
-    if (item.status == "cancelled") {
-      status = ":wastebasket: 予定削除";
-    } else if (item.status == "tentative") {
-      status = ":hourglass_flowing_sand: 暫定";
-    } else if (isFirstCreated(item)) {
-      status = ":sparkles: 予定追加";
-    } else {
-      status = ":arrow_right_hook: 予定変更";
-    }
     const id = item.id;
     if (!id) {
       console.warn("invalid item.id");
       continue;
     }
-    sendEventyNotifyById(id, status);
+
+    const updatedAt = Date.parse(item.updated ?? "");
+    const createdAt = Date.parse(item.created ?? "");
+    const SECOND = 1000; // ms;
+    // 5 秒以上経っているものは変更とみなす
+    const isUpdated = updatedAt - createdAt > 5 * SECOND;
+
+    let message;
+    switch (item.status) {
+      case "confirmed":
+        message = isUpdated
+          ? ":arrow_right_hook: 予定変更"
+          : ":sparkles: 予定追加";
+      case "cancelled":
+        message = ":wastebasket: 予定削除";
+      case "tentative":
+        message = ":hourglass_flowing_sand: 暫定";
+      default:
+        message = ":question: 不明";
+    }
+    sendEventyNotifyById(id, message);
   }
 
   // トリガーを更新
