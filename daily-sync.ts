@@ -157,20 +157,21 @@ function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
     // 5 秒以上経っているものは変更とみなす
     const isUpdated = updatedAt - createdAt > 5 * SECOND;
 
-    let message;
-    switch (item.status) {
-      case "confirmed":
-        message = isUpdated
-          ? ":arrow_right_hook: 予定変更"
-          : ":sparkles: 予定追加";
-      case "cancelled":
-        message = ":wastebasket: 予定削除";
-      case "tentative":
-        message = ":hourglass_flowing_sand: 暫定";
-      default:
-        message = ":question: 不明";
-    }
-    sendEventyNotifyById(id, message);
+    const message = (status) => {
+      switch (status) {
+        case "confirmed":
+          return isUpdated
+            ? ":arrow_right_hook: 予定変更"
+            : ":sparkles: 予定追加";
+        case "cancelled":
+          return ":wastebasket: 予定削除";
+        case "tentative":
+          return ":hourglass_flowing_sand: 暫定";
+        default:
+          return ":question: 不明";
+      }
+    };
+    sendEventyNotifyById(id, message(item.status));
   }
 
   // トリガーを更新
