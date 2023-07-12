@@ -57,6 +57,11 @@ function daily() {
 
 // トリガーとキューの更新
 function updateTriggers() {
+  // トリガーを削除してから登録する間、排他制御を行う
+  const lock = LockService.getScriptLock();
+  // 30 秒待っても Lock が取れなかったら例外を吐く
+  lock.waitLock(30 * 1000);
+
   // 過去のトリガーを削除
   ScriptApp.getProjectTriggers()
     .filter((trigger) =>
@@ -72,6 +77,8 @@ function updateTriggers() {
 
   setEventsTrigger(240, "notify240min", "ID_QUEUE_240MIN", events);
   setEventsTrigger(30, "notify30min", "ID_QUEUE_30MIN", events);
+
+  lock.releaseLock();
 }
 
 function setEventsTrigger(
