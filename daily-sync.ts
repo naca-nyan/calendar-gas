@@ -7,7 +7,7 @@ function sendEventyNotifyById(id: string, message: string) {
     return;
   }
   const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
-    format("yyyy/MM/dd HH:mm", date),
+    format("yyyy/MM/dd HH:mm", date)
   );
   const descriptions = [`開始日時：${start} ～ ${end}`, e.getDescription()];
   const embed = {
@@ -60,7 +60,7 @@ function updateTriggers() {
   // 過去のトリガーを削除
   ScriptApp.getProjectTriggers()
     .filter((trigger) =>
-      ["notify240min", "notify30min"].includes(trigger.getHandlerFunction()),
+      ["notify240min", "notify30min"].includes(trigger.getHandlerFunction())
     )
     .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
 
@@ -157,7 +157,7 @@ function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
     // 5 秒以上経っているものは変更とみなす
     const isUpdated = updatedAt - createdAt > 5 * SECOND;
 
-    const message = (status) => {
+    const message = (status?: string) => {
       switch (status) {
         case "confirmed":
           return isUpdated
