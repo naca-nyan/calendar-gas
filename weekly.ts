@@ -23,7 +23,7 @@ function notifyWeekly() {
     const eventsFormat = events.map((e) => {
       const title = e.getTitle();
       const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
-        format("HH:mm", date)
+        format("HH:mm", date),
       );
       return `${start}-${end} ${title}`;
     });
@@ -39,7 +39,7 @@ function notifyWeekly() {
     datesWithEvents
       .map(
         ({ date, events }) =>
-          `★ **${date}**\n` + (events.join("\n") || "予定はありません")
+          `★ **${date}**\n` + (events.join("\n") || "予定はありません"),
       )
       .join("\n\n");
 

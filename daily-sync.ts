@@ -7,7 +7,7 @@ function sendEventyNotifyById(id: string, message: string) {
     return;
   }
   const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
-    format("yyyy/MM/dd HH:mm", date)
+    format("yyyy/MM/dd HH:mm", date),
   );
   const descriptions = [`開始日時：${start} ～ ${end}`, e.getDescription()];
   const embed = {
@@ -17,7 +17,7 @@ function sendEventyNotifyById(id: string, message: string) {
   };
   const mentions = Array.from(
     e.getDescription().matchAll(/<@.+?>/g),
-    (match) => match[0]
+    (match) => match[0],
   );
   send({ content: mentions.join(" "), embeds: [embed] });
 }
@@ -60,7 +60,7 @@ function updateTriggers() {
   // 過去のトリガーを削除
   ScriptApp.getProjectTriggers()
     .filter((trigger) =>
-      ["notify240min", "notify30min"].includes(trigger.getHandlerFunction())
+      ["notify240min", "notify30min"].includes(trigger.getHandlerFunction()),
     )
     .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
 
@@ -78,7 +78,7 @@ function setEventsTrigger(
   beforeMin: number,
   triggerFuncName: string,
   queueName: string,
-  events: GoogleAppsScript.Calendar.CalendarEvent[]
+  events: GoogleAppsScript.Calendar.CalendarEvent[],
 ) {
   const now = new Date();
   const MINUTES = 60 * 1000;
