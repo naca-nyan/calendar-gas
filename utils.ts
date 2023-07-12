@@ -5,7 +5,7 @@ const CALENDAR_ID = scriptProp.getProperty("CALENDAR_ID") ?? "";
 const WEBHOOK_URL = scriptProp.getProperty("WEBHOOK_URL") ?? "";
 const CALENDAR = CalendarApp.getCalendarById(CALENDAR_ID);
 
-function send(payload) {
+function send(payload: any) {
   const response = UrlFetchApp.fetch(WEBHOOK_URL, {
     contentType: "application/json",
     method: "post",
@@ -15,11 +15,11 @@ function send(payload) {
   Logger.log(response.getResponseCode());
 }
 
-function format(format_string, date) {
+function format(format_string: string, date: GoogleAppsScript.Base.Date) {
   return Utilities.formatDate(date, "JST", format_string);
 }
 
-function dayOfWeek(date) {
+function dayOfWeek(date: Date) {
   const daysOfWeek = ["日", "月", "火", "水", "木", "金", "土"];
   return daysOfWeek[date.getDay()];
 }
