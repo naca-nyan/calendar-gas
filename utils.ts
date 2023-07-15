@@ -12,7 +12,7 @@ function send(payload: any) {
     payload: JSON.stringify(payload),
     muteHttpExceptions: false,
   });
-  Logger.log(response.getResponseCode());
+  console.log("send:", response.getResponseCode(), JSON.stringify(payload));
 }
 
 function format(format_string: string, date: GoogleAppsScript.Base.Date) {

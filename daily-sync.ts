@@ -107,6 +107,8 @@ function setEventsTrigger(
   // 通知トリガー設定
   targetEvents.forEach(({ notifyAt, event }) => {
     ScriptApp.newTrigger(triggerFuncName).timeBased().at(notifyAt).create();
+    const formated = format("yyyy/MM/dd-HH:mm", notifyAt);
+    console.log("trigger set:", beforeMin, formated, event.getTitle());
   });
   // キュー設定
   const ID_QUEUE = targetEvents.map(({ event }) => event.getId()).join(",");
