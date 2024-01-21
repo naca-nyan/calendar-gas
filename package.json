@@ -20,9 +20,9 @@
   "homepage": "https://github.com/naca-nyan/calendar-gas#readme",
   "devDependencies": {
     "@google/clasp": "^2.4.2",
-    "prettier": "^3.0.0"
+    "prettier": "^3.2.4"
   },
   "dependencies": {
-    "@types/google-apps-script": "^1.0.64"
+    "@types/google-apps-script": "^1.0.78"
   }
 }
