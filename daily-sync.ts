@@ -73,7 +73,11 @@ function updateTriggers() {
   const now = new Date();
   const after48hours = new Date();
   after48hours.setDate(now.getDate() + 2);
-  const events = CALENDAR.getEvents(now, after48hours);
+  const result = Calendar.Events?.list(CALENDAR_ID, {
+    timeMin: now.toISOString(),
+    timeMax: after48hours.toISOString(),
+  });
+  const events = result?.items ?? [];
 
   setEventsTrigger(240, "notify240min", "ID_QUEUE_240MIN", events);
   setEventsTrigger(30, "notify30min", "ID_QUEUE_30MIN", events);
@@ -85,7 +89,7 @@ function setEventsTrigger(
   beforeMin: number,
   triggerFuncName: string,
   queueName: string,
-  events: GoogleAppsScript.Calendar.CalendarEvent[],
+  events: GoogleAppsScript.Calendar.Schema.Event[],
 ) {
   const now = new Date();
   const MINUTES = 60 * 1000;
@@ -93,11 +97,15 @@ function setEventsTrigger(
 
   const targetEvents = events
     // 終日イベントは除外
-    .filter((e) => !e.isAllDayEvent())
+    .filter((e) => e.start?.dateTime !== undefined)
     // 開始時間でソート
-    .sort((e1, e2) => e1.getStartTime().getTime() - e2.getStartTime().getTime())
+    .sort((e1, e2) => {
+      const s1 = new Date(e1.start?.dateTime ?? "");
+      const s2 = new Date(e2.start?.dateTime ?? "");
+      return s1.getTime() - s2.getTime();
+    })
     .map((e) => {
-      const startInMs = e.getStartTime().getTime();
+      const startInMs = new Date(e.start?.dateTime ?? "").getTime();
       const notifyAt = new Date(startInMs - timeDiffInMS);
       return { notifyAt, event: e };
     })
@@ -108,10 +116,10 @@ function setEventsTrigger(
   targetEvents.forEach(({ notifyAt, event }) => {
     ScriptApp.newTrigger(triggerFuncName).timeBased().at(notifyAt).create();
     const formated = format("yyyy/MM/dd-HH:mm", notifyAt);
-    console.log("trigger set:", beforeMin, formated, event.getTitle());
+    console.log("trigger set:", beforeMin, formated, event.summary);
   });
   // キュー設定
-  const ID_QUEUE = targetEvents.map(({ event }) => event.getId()).join(",");
+  const ID_QUEUE = targetEvents.map(({ event }) => event.id).join(",");
   scriptProp.setProperty(queueName, ID_QUEUE);
 }
 
