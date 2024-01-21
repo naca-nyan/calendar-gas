@@ -3,7 +3,6 @@
 const scriptProp = PropertiesService.getScriptProperties();
 const CALENDAR_ID = scriptProp.getProperty("CALENDAR_ID") ?? "";
 const WEBHOOK_URL = scriptProp.getProperty("WEBHOOK_URL") ?? "";
-const CALENDAR = CalendarApp.getCalendarById(CALENDAR_ID);
 
 function send(payload: any) {
   const response = UrlFetchApp.fetch(WEBHOOK_URL, {

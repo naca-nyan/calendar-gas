@@ -1,22 +1,28 @@
 // https://github.com/naca-nyan/calendar-gas
 
 function sendEventyNotifyById(id: string, message: string) {
-  const e = CALENDAR.getEventById(id);
-  if (e === null) {
+  const e = Calendar.Events?.get(CALENDAR_ID, id);
+  if (e === undefined) {
     console.error("cannot find id", id);
     return;
   }
-  const [start, end] = [e.getStartTime(), e.getEndTime()].map((date) =>
-    format("yyyy/MM/dd HH:mm", date)
-  );
-  const descriptions = [`開始日時：${start} ～ ${end}`, e.getDescription()];
+  const [start, end] = [e.start, e.end].map((dt) => {
+    if (dt?.dateTime) {
+      return format("yyyy/MM/dd HH:mm", new Date(dt.dateTime ?? ""));
+    }
+    if (dt?.date) {
+      return dt.date;
+    }
+    return "invalid datetime";
+  });
+  const descriptions = [`開始日時：${start} ～ ${end}`, e.description];
   const embed = {
-    title: e.getTitle(),
+    title: e.summary,
     description: descriptions.join("\n"),
     fields: [{ name: message, value: "" }],
   };
   const mentions = Array.from(
-    e.getDescription().matchAll(/<@.+?>/g),
+    (e.description ?? "").matchAll(/<@.+?>/g),
     (match) => match[0],
   );
   send({ content: mentions.join(" "), embeds: [embed] });
