@@ -149,6 +149,10 @@ function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
     return;
   }
 
+  // syncToken で差分を取得してから nextSyncToken をセットするまで排他制御を行う
+  const lock = LockService.getScriptLock();
+  // 30 秒待っても Lock が取れなかったら例外を吐く
+  lock.waitLock(30 * 1000);
   // syncToken を使って差分を取得
   const syncToken = scriptProp.getProperty("SYNC_TOKEN");
   const events = Calendar.Events?.list(CALENDAR_ID, {
@@ -164,6 +168,7 @@ function sync(e: GoogleAppsScript.Events.CalendarEventUpdated) {
   if (nextSyncToken) {
     scriptProp.setProperty("SYNC_TOKEN", nextSyncToken);
   }
+  lock.releaseLock();
 
   const items = events.items ?? [];
   // 差分があったイベントをすべて通知
