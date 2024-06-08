@@ -82,6 +82,7 @@ function updateTriggers() {
   const result = Calendar.Events?.list(CALENDAR_ID, {
     timeMin: now.toISOString(),
     timeMax: after48hours.toISOString(),
+    singleEvents: true,
   });
   const events = result?.items ?? [];
 
